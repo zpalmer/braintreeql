@@ -6,10 +6,16 @@ RSpec.describe CheckoutsController, type: :controller do
   include_context 'mock_data'
 
   before do
-    @mock_gateway = double("gateway")
-    allow(@mock_gateway).to receive_message_chain("client_token.generate") { "your_client_token" }
+    @mock_gateway = double("BraintreeGateway")
+    allow(@mock_gateway).to receive(:client_token).and_return({
+      "data" => {
+        "createClientToken" => {
+          "clientToken" => "your_client_token"
+        }
+      }
+    })
 
-    expect(Braintree::Gateway).to receive(:new).and_return(@mock_gateway)
+    allow(BraintreeGateway).to receive(:new).and_return(@mock_gateway)
   end
 
   describe "GET #new" do
@@ -25,8 +31,13 @@ RSpec.describe CheckoutsController, type: :controller do
   end
 
   describe "GET #show" do
+    before do
+      @mock_old_gateway = double("old_gateway")
+      expect(Braintree::Gateway).to receive(:new).and_return(@mock_old_gateway)
+    end
+
     it "returns http success" do
-      allow(@mock_gateway).to receive_message_chain("transaction.find") { mock_transaction }
+      allow(@mock_old_gateway).to receive_message_chain("transaction.find") { mock_transaction }
 
       get :show, id: "my_id"
 
@@ -34,7 +45,7 @@ RSpec.describe CheckoutsController, type: :controller do
     end
 
     it "displays the transaction's fields" do
-      allow(@mock_gateway).to receive_message_chain("transaction.find") { mock_transaction }
+      allow(@mock_old_gateway).to receive_message_chain("transaction.find") { mock_transaction }
 
       get :show, id: "my_id"
 
@@ -59,7 +70,7 @@ RSpec.describe CheckoutsController, type: :controller do
     end
 
     it "populates result object with success for a succesful transaction" do
-      allow(@mock_gateway).to receive_message_chain("transaction.find") { mock_transaction }
+      allow(@mock_old_gateway).to receive_message_chain("transaction.find") { mock_transaction }
 
       get :show, id: "my_id"
 
@@ -72,7 +83,7 @@ RSpec.describe CheckoutsController, type: :controller do
 
 
     it "populates result object with failure for a failed transaction" do
-      allow(@mock_gateway).to receive_message_chain("transaction.find") { mock_failed_transaction }
+      allow(@mock_old_gateway).to receive_message_chain("transaction.find") { mock_failed_transaction }
 
       get :show, id: "my_id"
 
@@ -89,44 +100,58 @@ RSpec.describe CheckoutsController, type: :controller do
       amount = "10.00"
       nonce = "fake-valid-nonce"
 
-      allow(@mock_gateway).to receive_message_chain("transaction.sale") { 
-        Braintree::SuccessfulResult.new(transaction: mock_transaction)
-      }
+      allow(@mock_gateway).to receive(:transaction).and_return(
+        mock_successful_graphql_transaction
+      )
 
       post :create, payment_method_nonce: nonce, amount: amount
 
-      expect(response).to redirect_to("/checkouts/#{mock_transaction.id}")
+      expect(response).to redirect_to("/checkouts/#{id_for(mock_successful_graphql_transaction)}")
     end
 
     context "when there are processor errors" do
       it "redirects to the transaction page" do
-        amount = "2000"
+        amount = "2001"
         nonce = "fake-valid-nonce"
 
-        allow(@mock_gateway).to receive_message_chain("transaction.sale") { 
-          processor_declined_result
-        }
+        allow(@mock_gateway).to receive(:transaction).and_return(
+          mock_processor_declined_graphql_transaction
+        )
 
         post :create, payment_method_nonce: nonce, amount: amount
 
-        expect(response).to redirect_to("/checkouts/#{processor_declined_result.transaction.id}")
+        expect(response).to redirect_to("/checkouts/#{id_for(mock_processor_declined_graphql_transaction)}")
       end
     end
 
     context "when braintree returns an error" do
-      it "displays the errors" do
-        amount = "not_a_valid_amount"
-        nonce = "not_a_valid_nonce"
+      it "displays graphql errors" do
+        amount = "nine and three quarters"
+        nonce = "fake-valid-nonce"
 
-        allow(@mock_gateway).to receive_message_chain("transaction.sale") { 
-          sale_error_result
-        }
+        allow(@mock_gateway).to receive(:transaction).and_return(
+          mock_transaction_graphql_error
+        )
 
         post :create, payment_method_nonce: nonce, amount: amount
 
         expect(flash[:error]).to eq([
-          "Error: 81503: Amount is an invalid format.",
-          "Error: 91565: Unknown payment_method_nonce.",
+          "Error: Variable 'amount' has an invalid value. Values of type Amount must contain exactly 0, 2 or 3 decimal places."
+        ])
+      end
+
+      it "displays validation errors" do
+        amount = "9.75"
+        nonce = "non-fake-invalid-nonce"
+
+        allow(@mock_gateway).to receive(:transaction).and_return(
+					mock_transaction_validation_error
+        )
+
+        post :create, payment_method_nonce: nonce, amount: amount
+
+        expect(flash[:error]).to eq([
+          "Error: Unknown or expired single use token ID.",
         ])
       end
 
@@ -134,9 +159,9 @@ RSpec.describe CheckoutsController, type: :controller do
         amount = "not_a_valid_amount"
         nonce = "not_a_valid_nonce"
 
-        allow(@mock_gateway).to receive_message_chain("transaction.sale") { 
-          sale_error_result
-        }
+        allow(@mock_gateway).to receive(:transaction).and_return(
+          mock_transaction_graphql_error
+        )
 
         post :create, payment_method_nonce: nonce, amount: amount
 

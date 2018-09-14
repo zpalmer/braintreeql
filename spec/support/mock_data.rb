@@ -1,4 +1,110 @@
 RSpec.shared_context 'mock_data' do
+
+  def id_for(transaction)
+    transaction["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"]
+  end
+
+  let(:mock_successful_graphql_transaction) {
+    {
+      "data" => {
+        "createTransactionFromSingleUseToken" => {
+          "transaction" => {
+            "id" => "wstfgl",
+            "amount" => "12.12",
+            "status" => "SUBMITTED_FOR_SETTLEMENT",
+            "gatewayRejectionReason" => nil,
+            "processorResponse" => {
+              "legacyCode" => "1000",
+              "message" => "Approved",
+              "cvvResponseCode" => "MATCHES",
+              "avsPostalCodeResponseCode" => "MATCHES"
+            }
+          }
+        }
+      },
+      "extensions" => {
+        "requestId" => "abc-request-123-id"
+      }
+    }
+  }
+
+  let(:mock_processor_declined_graphql_transaction) {
+    {
+      "data" => {
+        "createTransactionFromSingleUseToken" => {
+          "transaction" => {
+            "id" => "spaceodyssey",
+            "amount" => "2001",
+            "status" => "PROCESSOR_DECLINED",
+            "gatewayRejectionReason" => nil,
+            "processorResponse" => {
+              "legacyCode" => "2001",
+              "message" => "Insufficient Funds",
+            }
+          }
+        }
+      },
+      "extensions" => {
+        "requestId" => "def-request-456-id"
+      }
+    }
+  }
+
+  let(:mock_transaction_validation_error) {
+    {
+      "data" => {
+        "createTransactionFromSingleUseToken" => nil,
+      },
+      "errors" => [
+        {
+          "message" => "Unknown or expired single use token ID.",
+          "locations" => [
+            {
+              "line" => 2,
+              "column" => 3
+            }
+          ],
+          "path" => [
+            "createTransactionFromSingleUseToken"
+          ],
+          "extensions" => {
+            "errorType" => "user_error",
+            "errorClass" => "VALIDATION",
+            "legacyCode" => "91565",
+            "inputPath" => [
+              "input",
+              "transaction",
+              "singleUseTokenId"
+            ]
+          }
+        }
+      ],
+      "extensions" => {
+        "requestId" => "ghi-request-789-id"
+      }
+    }
+  }
+
+  let(:mock_transaction_graphql_error) {
+    {
+      "data" => nil,
+      "errors" => [
+        {
+          "message" => "Variable 'amount' has an invalid value. Values of type Amount must contain exactly 0, 2 or 3 decimal places.",
+          "locations" => [
+            {
+              "line" => 1,
+              "column" => 11
+            }
+          ]
+        }
+      ],
+      "extensions" => {
+        "requestId" => "jkl-request-012-id"
+      }
+    }
+  }
+
   let(:mock_transaction) {
     double(Braintree::Transaction,
       id: "my_id",

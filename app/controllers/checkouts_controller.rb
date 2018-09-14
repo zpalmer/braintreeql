@@ -10,11 +10,11 @@ class CheckoutsController < ApplicationController
   ]
 
   def new
-    @client_token = gateway.client_token.generate
+    @client_token = gateway.client_token["data"]["createClientToken"]["clientToken"]
   end
 
   def show
-    @transaction = gateway.transaction.find(params[:id])
+    @transaction = old_gateway.transaction.find(params[:id])
     @result = _create_result_hash(@transaction)
   end
 
@@ -22,19 +22,16 @@ class CheckoutsController < ApplicationController
     amount = params["amount"] # In production you should not take amounts directly from clients
     nonce = params["payment_method_nonce"]
 
-    result = gateway.transaction.sale(
-      amount: amount,
-      payment_method_nonce: nonce,
-      :options => {
-        :submit_for_settlement => true
-      }
-    )
+    result = gateway.transaction(nonce, amount)
 
-    if result.success? || result.transaction
-      redirect_to checkout_path(result.transaction.id)
-    else
-      error_messages = result.errors.map { |error| "Error: #{error.code}: #{error.message}" }
+    if result["data"] && result["data"]["createTransactionFromSingleUseToken"]
+      redirect_to checkout_path(result["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"])
+    elsif result["errors"]
+      error_messages = result["errors"].map { |error| "Error: #{error['message']}" }
       flash[:error] = error_messages
+      redirect_to new_checkout_path
+    else
+      flash[:error] = ["Something unexpected went wrong! Try again."]
       redirect_to new_checkout_path
     end
   end
@@ -58,9 +55,13 @@ class CheckoutsController < ApplicationController
   end
 
   def gateway
+    @gateway ||= BraintreeGateway.new
+  end
+
+  def old_gateway
     env = ENV["BT_ENVIRONMENT"]
 
-    @gateway ||= Braintree::Gateway.new(
+    @old_gateway ||= Braintree::Gateway.new(
       :environment => env && env.to_sym,
       :merchant_id => ENV["BT_MERCHANT_ID"],
       :public_key => ENV["BT_PUBLIC_KEY"],
