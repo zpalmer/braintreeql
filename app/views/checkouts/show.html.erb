@@ -22,6 +22,17 @@
           <span>Test Another Transaction</span>
         </a>
       </section>
+
+      <% if @voidable %>
+        <%= form_tag("/checkouts/void", method: "post") do %>
+          <input type="hidden" id="global_id" name="global_id" value=<%= GlobalIdHack.encode_transaction(@transaction.id) %>/>
+          <section>
+            <button class="button primary back" type="submit">
+              <span>Void This Transaction</span>
+            </button>
+          </section>
+        <% end %>
+      <% end %>
     </div>
   </div>
 </div>

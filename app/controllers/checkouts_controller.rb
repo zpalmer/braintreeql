@@ -16,6 +16,11 @@ class CheckoutsController < ApplicationController
   def show
     @transaction = old_gateway.transaction.find(params[:id])
     @result = _create_result_hash(@transaction)
+    @voidable = [
+      Braintree::Transaction::Status::Authorizing,
+      Braintree::Transaction::Status::Authorized,
+      Braintree::Transaction::Status::SubmittedForSettlement,
+    ].include?(@transaction.status)
   end
 
   def create
@@ -41,6 +46,13 @@ class CheckoutsController < ApplicationController
     end
   end
 
+  def void
+    id = params["global_id"]
+    old_gateway.transaction.void(id)
+
+    redirect_to checkout_path(id)
+  end
+
   def _create_result_hash(transaction)
     status = transaction.status
 
@@ -49,6 +61,12 @@ class CheckoutsController < ApplicationController
         :header => "Sweet Success!",
         :icon => "success",
         :message => "Your test transaction has been successfully processed. See the Braintree API response and try again."
+      }
+    elsif status == Braintree::Transaction::Status::Voided
+      result_hash = {
+        :header => "Transaction Voided",
+        :icon => "success",
+        :message => "Your test transaction has been voided. See the Braintree API response and try again."
       }
     else
       result_hash = {

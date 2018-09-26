@@ -33,5 +33,19 @@ RSpec.describe "checkouts/show.html.erb", type: :view do
     expect(rendered).to match /Test Another Transaction/
     expect(rendered).to match /checkouts\/new/
   end
+
+  it "includes the 'Void' link when successful" do
+    assign(:voidable, true)
+    render
+    expect(rendered).to match /Void This Transaction/
+    expect(rendered).to match /checkouts\/void/
+  end
+
+  it "does not include the 'Void' link when unsuccessful" do
+    assign(:voidable, false)
+    render
+    expect(rendered).not_to match /Void This Transaction/
+    expect(rendered).not_to match /checkouts\/void/
+  end
 end
 

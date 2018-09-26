@@ -170,4 +170,21 @@ RSpec.describe CheckoutsController, type: :controller do
       end
     end
   end
+
+  describe "POST#void" do
+    before do
+      @mock_old_gateway = double("old_gateway")
+      expect(Braintree::Gateway).to receive(:new).and_return(@mock_old_gateway)
+    end
+
+    it "redirects to show the newly-voided transaction" do
+      allow(@mock_old_gateway).to receive_message_chain("transaction.void") { mock_voided_transaction }
+      voided_id = GlobalIdHack.encode_transaction(mock_voided_transaction.id)
+
+      post :void, id: voided_id
+
+      expect(response).to redirect_to("/checkouts/#{voided_id}}")
+    end
+
+  end
 end

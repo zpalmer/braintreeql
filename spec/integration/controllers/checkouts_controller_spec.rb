@@ -60,4 +60,28 @@ RSpec.describe CheckoutsController, type: :controller do
       end
     end
   end
+
+  describe "POST #void" do
+    it "voids the given Braintree transaction and re-displays its attributes" do
+      # Using a random amount to prevent duplicate checking errors
+      amount = "#{random.rand(100)}.#{random.rand(100)}"
+      result = BraintreeGateway.new.transaction("fake-valid-nonce", amount)
+      expect(result["data"]["createTransactionFromSingleUseToken"]).not_to be_nil
+
+      transaction = result["data"]["createTransactionFromSingleUseToken"]["transaction"]
+      id = GlobalIdHack.encode_transaction(transaction["id"])
+      expect(transaction["status"]).to match Regexp.new("submitted_for_settlement", Regexp::IGNORECASE)
+
+      post :void, id: id
+
+      voided_result = Braintree::Gateway.new(
+        :environment => ENV["BT_ENVIRONMENT"],
+        :merchant_id => ENV["BT_MERCHANT_ID"],
+        :public_key => ENV["BT_PUBLIC_KEY"],
+        :private_key => ENV["BT_PRIVATE_KEY"],
+      ).transaction.find(id).transaction
+      expect(voided_result.status).to match Regexp.new("voided", Regexp::IGNORECASE)
+      expect(response).to redirect_to(/\/checkouts\/#{id}/)
+    end
+  end
 end

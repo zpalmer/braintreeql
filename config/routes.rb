@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   root 'checkouts#new'
 
   resources :checkouts,  only: [:new, :create, :show]
+  post 'checkouts/void', :to => 'checkouts#void'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
