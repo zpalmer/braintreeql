@@ -38,6 +38,22 @@ class BraintreeGateway
               cvvResponseCode
               avsPostalCodeResponseCode
             }
+            paymentMethodDetails {
+              ...on PayPalDetails {
+                imageUrl
+                payer {
+                  email
+                  firstName
+                  lastName
+                }
+              }
+              ...on CreditCardDetails {
+                imageUrl
+                last4
+                brandCode
+                cardholderName
+              }
+            }
           }
         }
       }
