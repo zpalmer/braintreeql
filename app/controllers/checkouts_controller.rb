@@ -25,7 +25,12 @@ class CheckoutsController < ApplicationController
     result = gateway.transaction(nonce, amount)
 
     if result["data"] && result["data"]["createTransactionFromSingleUseToken"]
-      redirect_to checkout_path(result["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"])
+
+      # hack to obtain GraphQL Global ID until it's returned from the API
+      blue_public_id = result["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"]
+      global_id = GlobalIdHack.encode_transaction(blue_public_id)
+
+      redirect_to checkout_path(global_id)
     elsif result["errors"]
       error_messages = result["errors"].map { |error| "Error: #{error['message']}" }
       flash[:error] = error_messages

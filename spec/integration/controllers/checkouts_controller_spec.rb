@@ -28,6 +28,7 @@ RSpec.describe CheckoutsController, type: :controller do
 
       expect(response).to have_http_status(:success)
       expect(response.body).to match Regexp.new(transaction["id"])
+      expect(response.body).to match Regexp.new(GlobalIdHack.encode_transaction(transaction["id"]))
       expect(response.body).to match Regexp.new(transaction["amount"].to_s)
       expect(response.body).to match Regexp.new(transaction["status"], Regexp::IGNORECASE)
     end

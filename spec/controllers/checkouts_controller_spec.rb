@@ -50,6 +50,7 @@ RSpec.describe CheckoutsController, type: :controller do
       get :show, id: "my_id"
 
       expect(response.body).to match /my_id/
+      expect(response.body).to match /#{GlobalIdHack.encode_transaction("my_id")}/
       expect(response.body).to match /sale/
       expect(response.body).to match /10\.0/
       expect(response.body).to match /authorized/

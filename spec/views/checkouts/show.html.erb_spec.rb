@@ -18,6 +18,11 @@ RSpec.describe "checkouts/show.html.erb", type: :view do
     expect(rendered).to match /my_id/
   end
 
+  it "includes the global transaction id" do
+    render
+    expect(rendered).to match /#{GlobalIdHack.encode_transaction('my_id')}/
+  end
+
   it "includes the Credit Card Details" do
     render
     expect(rendered).to match /Payment/

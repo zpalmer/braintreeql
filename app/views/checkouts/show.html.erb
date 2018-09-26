@@ -40,6 +40,11 @@
 
       <table cellpadding="0" cellspacing="0">
         <tbody>
+          <!-- hack for global ID -->
+          <tr>
+            <th>global_id</th>
+            <td><%= GlobalIdHack.encode_transaction(@transaction.id) %></td>
+          </tr>
           <tr>
             <th>id</th>
             <td><%= @transaction.id %></td>

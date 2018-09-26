@@ -1,7 +1,7 @@
 RSpec.shared_context 'mock_data' do
 
   def id_for(transaction)
-    transaction["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"]
+    GlobalIdHack.encode_transaction(transaction["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"])
   end
 
   let(:mock_successful_graphql_transaction) {
