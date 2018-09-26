@@ -9,46 +9,75 @@ class BraintreeGateway
 
 
   def ping
-    _make_request(JSON.generate({:query => "{ ping }"}))
+    _make_request("{ ping }")
   end
 
   def client_token
-    _make_request(_generate_payload("mutation { createClientToken(input: {}) { clientToken } }"))
+    query_string = <<~GRAPHQL
+      mutation {
+        createClientToken(input: {}) {
+          clientToken
+        }
+      }
+      GRAPHQL
+    _make_request(query: query_string)
   end
 
   def transaction(payment_method_id, amount)
-    _make_request(_generate_payload(
-      "mutation($input: CreateTransactionFromSingleUseTokenInput!) { createTransactionFromSingleUseToken(input: $input) { transaction { id amount status gatewayRejectionReason processorResponse { legacyCode message cvvResponseCode avsPostalCodeResponseCode } } } }",
-      {:input => {
+    query_string = <<~GRAPHQL
+      mutation($input: CreateTransactionFromSingleUseTokenInput!) {
+        createTransactionFromSingleUseToken(input: $input) {
+          transaction {
+            id
+            amount
+            status
+            gatewayRejectionReason
+            processorResponse {
+              legacyCode
+              message
+              cvvResponseCode
+              avsPostalCodeResponseCode
+            }
+          }
+        }
+      }
+    GRAPHQL
+    input_variables = {
+      :input => {
         :singleUseTokenId => payment_method_id,
         :transaction => {
           :amount => amount,
         },
-      }}
-    ))
+      }
+    }
+    _make_request(:query => query_string, :variables => input_variables)
   end
 
   def vault(single_use_payment_method_id)
-    _make_request(_generate_payload(
-      "mutation($input: VaultPaymentMethodInput!) { vaultPaymentMethod(input: $input) { paymentMethod { id usage } } }",
-      {:input => {
+    query_string = <<~GRAPHQL
+      mutation($input: VaultPaymentMethodInput!) {
+        vaultPaymentMethod(input: $input) {
+          paymentMethod {
+            id
+            usage
+          }
+        }
+      }
+    GRAPHQL
+    input_variables = {
+      :input => {
         :paymentMethodId => single_use_payment_method_id,
-      }}
-    ))
+      }
+    }
+    _make_request(:query => query_string, :variables => input_variables)
   end
 
-  def _generate_payload(query_string, variables_hash = {})
-    JSON.generate({
-      :query => query_string,
-      :variables => variables_hash
-    })
-  end
-
-  def _make_request(payload)
+  def _make_request(query:, variables: {})
+    payload = _generate_payload(query, variables).to_s
     raw_response = self.class.post(
       ENDPOINT,
       {
-        :body => payload.to_s,
+        :body => payload,
         :basic_auth => {
           :username => BASIC_AUTH_USERNAME,
           :password => BASIC_AUTH_PASSWORD,
@@ -60,5 +89,12 @@ class BraintreeGateway
       }
     )
     return raw_response.parsed_response
+  end
+
+  def _generate_payload(query_string, variables_hash)
+    JSON.generate({
+      :query => query_string,
+      :variables => variables_hash
+    })
   end
 end
