@@ -22,16 +22,6 @@ class BraintreeGateway
       chargePaymentMethod(input: $input) {
         transaction {
           id
-          amount
-          status
-          gatewayRejectionReason
-          processorResponse {
-            legacyCode
-            message
-            cvvResponseCode
-            avsPostalCodeResponseCode
-          }
-        }
       }
     }
     GRAPHQL
