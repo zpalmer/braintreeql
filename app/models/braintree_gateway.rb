@@ -56,6 +56,28 @@ class BraintreeGateway
     )
   end
 
+  def node_fetch_transaction(transaction_id)
+    query = <<~GRAPHQL
+    query {
+      node(id: "#{transaction_id}") {
+        ... on Transaction {
+          id
+          amount
+          status
+          gatewayRejectionReason
+          processorResponse {
+            legacyCode
+            message
+            cvvResponseCode
+            avsPostalCodeResponseCode
+          }
+        }
+      }
+    }
+    GRAPHQL
+    _make_request(query)
+  end
+
   def _generate_payload(query_string, variables_hash)
     JSON.generate({
       :query => query_string,

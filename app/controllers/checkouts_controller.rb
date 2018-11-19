@@ -1,12 +1,11 @@
 class CheckoutsController < ApplicationController
   TRANSACTION_SUCCESS_STATUSES = [
-    Braintree::Transaction::Status::Authorizing,
-    Braintree::Transaction::Status::Authorized,
-    Braintree::Transaction::Status::Settled,
-    Braintree::Transaction::Status::SettlementConfirmed,
-    Braintree::Transaction::Status::SettlementPending,
-    Braintree::Transaction::Status::Settling,
-    Braintree::Transaction::Status::SubmittedForSettlement,
+    "AUTHORIZED",
+    "AUTHORIZING",
+    "SETTLED",
+    "SETTLEMENT_PENDING",
+    "SETTLING",
+    "SUBMITTED_FOR_SETTLEMENT",
   ]
 
   def new
@@ -14,8 +13,17 @@ class CheckoutsController < ApplicationController
   end
 
   def show
-    @transaction = old_gateway.transaction.find(params[:id])
-    @result = _create_result_hash(@transaction)
+    begin
+      @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {}).fetch("node")
+      @result = _create_result_hash(@transaction)
+    rescue BraintreeGateway::GraphQLError => error
+      if error.message != nil and !error.messages.empty?
+        flash[:error] = error.messages
+      else
+        flash[:error] = ["Something unexpected went wrong! Try again."]
+      end
+      redirect_to new_checkout_path
+    end
   end
 
   def create
@@ -43,7 +51,7 @@ class CheckoutsController < ApplicationController
   end
 
   def _create_result_hash(transaction)
-    status = transaction.status
+    status = transaction["status"]
 
     if TRANSACTION_SUCCESS_STATUSES.include? status
       result_hash = {
@@ -53,7 +61,7 @@ class CheckoutsController < ApplicationController
       }
     else
       result_hash = {
-        :header => "Transaction Failed",
+        :header => "Transaction Unsuccessful",
         :icon => "fail",
         :message => "Your test transaction has a status of #{status}. See the Braintree API response and try again."
       }
