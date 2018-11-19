@@ -61,6 +61,32 @@ class BraintreeGateway
             cvvResponseCode
             avsPostalCodeResponseCode
           }
+          paymentMethodSnapshot {
+            __typename
+            ... on CreditCardDetails {
+              bin
+              last4
+              expirationMonth
+              expirationYear
+              brandCode
+              cardholderName
+              binData {
+                countryOfIssuance
+              }
+              origin {
+                type
+              }
+            }
+            ... on PayPalTransactionDetails {
+              payer {
+                email
+                payerId
+                firstName
+                lastName
+              }
+              payerStatus
+            }
+          }
         }
       }
     }

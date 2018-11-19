@@ -68,42 +68,17 @@
       </table>
     </section>
 
-    <section>
-      <h5>Payment</h5>
-
-      <table cellpadding="0" cellspacing="0">
-        <tbody>
-          <tr>
-            <th>token</th>
-            <td><%=  %></td>
-          </tr>
-          <tr>
-            <th>bin</th>
-            <td><%=  %></td>
-          </tr>
-          <tr>
-            <th>last_4</th>
-            <td><%=  %></td>
-          </tr>
-          <tr>
-            <th>card_type</th>
-            <td><%=  %></td>
-          </tr>
-          <tr>
-            <th>expiration_date</th>
-            <td><%=  %></td>
-          </tr>
-          <tr>
-            <th>cardholder_name</th>
-            <td><%=  %></td>
-          </tr>
-          <tr>
-            <th>customer_location</th>
-            <td><%=  %></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+    <% if @transaction["paymentMethodSnapshot"] %>
+      <section>
+        <h5>Payment</h5>
+        <% if @transaction["paymentMethodSnapshot"]["__typename"] == "CreditCardDetails" %>
+          <%= render "checkouts/credit_card_details", :locals => {:credit_card => @transaction["paymentMethodSnapshot"]} %>
+        <% end %>
+        <% if @transaction["paymentMethodSnapshot"]["__typename"] == "PayPalTransactionDetails" %>
+          <%= render "checkouts/paypal_account_details", :locals => {:paypal_account => @transaction["paymentMethodSnapshot"]} %>
+        <% end %>
+      </section>
+    <% end %>
 
     <section>
       <p class="center small">Integrate with the Braintree JS SDK and GraphQL API for a secure and seamless checkout</p>
