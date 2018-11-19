@@ -22,17 +22,22 @@ class CheckoutsController < ApplicationController
     amount = params["amount"] # In production you should not take amounts directly from clients
     nonce = params["payment_method_nonce"]
 
-    result = gateway.transaction(nonce, amount)
-    config.logger.log(Logger::DEBUG, result)
+    begin
+      result = gateway.transaction(nonce, amount)
+      config.logger.log(Logger::DEBUG, result)
 
-    if result["data"] && result["data"]["chargePaymentMethod"]
-      redirect_to checkout_path(result["data"]["chargePaymentMethod"]["transaction"]["id"])
-    elsif result["errors"]
-      error_messages = result["errors"].map { |error| "Error: #{error['message']}" }
-      flash[:error] = error_messages
-      redirect_to new_checkout_path
-    else
-      flash[:error] = ["Something unexpected went wrong! Try again."]
+      if result["data"] && result["data"]["chargePaymentMethod"]
+        redirect_to checkout_path(result["data"]["chargePaymentMethod"]["transaction"]["id"])
+      else
+        flash[:error] = ["Something unexpected went wrong! Try again."]
+        redirect_to new_checkout_path
+      end
+    rescue BraintreeGateway::GraphQLError => error
+      if error.message != nil and !error.messages.empty?
+        flash[:error] = error.messages
+      else
+        flash[:error] = ["Something unexpected went wrong! Try again."]
+      end
       redirect_to new_checkout_path
     end
   end
