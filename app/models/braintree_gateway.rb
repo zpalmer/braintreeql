@@ -17,10 +17,28 @@ class BraintreeGateway
   end
 
   def transaction(payment_method_id, amount)
+    transaction_payload = <<~GRAPHQL
+    mutation($input: ChargePaymentMethodInput!) {
+      chargePaymentMethod(input: $input) {
+        transaction {
+          id
+          amount
+          status
+          gatewayRejectionReason
+          processorResponse {
+            legacyCode
+            message
+            cvvResponseCode
+            avsPostalCodeResponseCode
+          }
+        }
+      }
+    }
+    GRAPHQL
     _make_request(_generate_payload(
-      "mutation($input: CreateTransactionFromSingleUseTokenInput!) { createTransactionFromSingleUseToken(input: $input) { transaction { id amount status gatewayRejectionReason processorResponse { legacyCode message cvvResponseCode avsPostalCodeResponseCode } } } }",
+      transaction_payload,
       {:input => {
-        :singleUseTokenId => payment_method_id,
+        :paymentMethodId => payment_method_id,
         :transaction => {
           :amount => amount,
         },

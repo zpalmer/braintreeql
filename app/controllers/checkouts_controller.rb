@@ -23,9 +23,10 @@ class CheckoutsController < ApplicationController
     nonce = params["payment_method_nonce"]
 
     result = gateway.transaction(nonce, amount)
+    config.logger.log(Logger::DEBUG, result)
 
-    if result["data"] && result["data"]["createTransactionFromSingleUseToken"]
-      redirect_to checkout_path(result["data"]["createTransactionFromSingleUseToken"]["transaction"]["id"])
+    if result["data"] && result["data"]["chargePaymentMethod"]
+      redirect_to checkout_path(result["data"]["chargePaymentMethod"]["transaction"]["id"])
     elsif result["errors"]
       error_messages = result["errors"].map { |error| "Error: #{error['message']}" }
       flash[:error] = error_messages
