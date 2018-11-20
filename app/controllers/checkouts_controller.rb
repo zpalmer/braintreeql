@@ -41,7 +41,7 @@ class CheckoutsController < ApplicationController
         redirect_to new_checkout_path
       end
     rescue BraintreeGateway::GraphQLError => error
-      if error.message != nil and !error.messages.empty?
+      if error.messages != nil and !error.messages.empty?
         flash[:error] = error.messages
       else
         flash[:error] = ["Something unexpected went wrong! Try again."]
