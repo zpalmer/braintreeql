@@ -17,7 +17,7 @@ class CheckoutsController < ApplicationController
       @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {}).fetch("node")
       @result = _create_result_hash(@transaction)
     rescue BraintreeGateway::GraphQLError => error
-      if error.message != nil and !error.messages.empty?
+      if error.messages != nil and !error.messages.empty?
         flash[:error] = error.messages
       else
         flash[:error] = ["Something unexpected went wrong! Try again."]
