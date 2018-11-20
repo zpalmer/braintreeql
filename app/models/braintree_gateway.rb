@@ -48,51 +48,17 @@ class BraintreeGateway
   end
 
   def node_fetch_transaction(transaction_id)
-    query = <<~GRAPHQL
-    query {
-      node(id: "#{transaction_id}") {
-        ... on Transaction {
-          id
-          amount
-          status
-          gatewayRejectionReason
-          processorResponse {
-            legacyCode
-            message
-            cvvResponseCode
-            avsPostalCodeResponseCode
-          }
-          paymentMethodSnapshot {
-            __typename
-            ... on CreditCardDetails {
-              bin
-              last4
-              expirationMonth
-              expirationYear
-              brandCode
-              cardholderName
-              binData {
-                countryOfIssuance
-              }
-              origin {
-                type
-              }
-            }
-            ... on PayPalTransactionDetails {
-              payer {
-                email
-                payerId
-                firstName
-                lastName
-              }
-              payerStatus
-            }
+    _make_request(
+      <<~GRAPHQL
+      query {
+        node(id: "#{transaction_id}") {
+          ... on Transaction {
+          #{BraintreeGateway.show_transaction_fields}
           }
         }
       }
-    }
-    GRAPHQL
-    _make_request(query)
+      GRAPHQL
+    )
   end
 
   def _generate_payload(query_string, variables_hash)
@@ -127,6 +93,47 @@ class BraintreeGateway
     end
 
     return result_hash
+  end
+
+  def self.show_transaction_fields
+    <<~GRAPHQL
+      id
+      amount
+      status
+      gatewayRejectionReason
+      processorResponse {
+        legacyCode
+        message
+        cvvResponseCode
+        avsPostalCodeResponseCode
+      }
+      paymentMethodSnapshot {
+        __typename
+        ... on CreditCardDetails {
+          bin
+          last4
+          expirationMonth
+          expirationYear
+          brandCode
+          cardholderName
+          binData {
+            countryOfIssuance
+          }
+          origin {
+            type
+          }
+        }
+        ... on PayPalTransactionDetails {
+          payer {
+            email
+            payerId
+            firstName
+            lastName
+          }
+          payerStatus
+        }
+      }
+    GRAPHQL
   end
 
   class GraphQLError < StandardError
