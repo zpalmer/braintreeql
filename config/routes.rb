@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   root 'checkouts#new'
 
   resources :checkouts,  only: [:new, :create, :show]
+  get :admin, :to => 'admin#index'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

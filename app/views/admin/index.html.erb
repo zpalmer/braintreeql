@@ -1,0 +1,52 @@
+<div class="wrapper">
+  <div class="content">
+    <h1>Last <%= @max_number_of_ids_requestable_at_once %> Transactions</h1>
+    <% @transactions.each do |transaction| %>
+      <article class="content compact">
+        <section>
+          <h5>Transaction</h5>
+
+          <table cellpadding="0" cellspacing="0">
+            <tbody>
+              <tr>
+                <th>id</th>
+                <td><%= transaction["id"] %></td>
+              </tr>
+              <tr>
+                <th>type</th>
+                <td>sale</td>
+              </tr>
+              <tr>
+                <th>amount</th>
+                <td><%= transaction["amount"] %></td>
+              </tr>
+              <tr>
+                <th>status</th>
+                <td><%= transaction["status"] %></td>
+              </tr>
+              <tr>
+                <th>created at</th>
+                <td><%=  %></td>
+              </tr>
+              <tr>
+                <th>last change at</th>
+                <td><%=  %></td>
+              </tr>
+            </tbody>
+          </table>
+
+        <% if transaction["paymentMethodSnapshot"] %>
+            <% if transaction["paymentMethodSnapshot"]["__typename"] == "CreditCardDetails" %>
+              <%= render "checkouts/credit_card_details", :locals => {:credit_card => transaction["paymentMethodSnapshot"]} %>
+            <% end %>
+            <% if transaction["paymentMethodSnapshot"]["__typename"] == "PayPalTransactionDetails" %>
+              <%= render "checkouts/paypal_account_details", :locals => {:paypal_account => transaction["paymentMethodSnapshot"]} %>
+            <% end %>
+        <% end %>
+
+        </section>
+      </article>
+    <% end %>
+  </div>
+  <%= render "drawer" %>
+</div>

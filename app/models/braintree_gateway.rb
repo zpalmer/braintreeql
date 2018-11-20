@@ -61,6 +61,22 @@ class BraintreeGateway
     )
   end
 
+  def node_fetch_many_transactions(transaction_ids, fields=BraintreeGateway.show_transaction_fields)
+    query = "query FetchManyTransactions {"
+    transaction_ids.each_with_index do |id, index|
+      query += <<~GRAPHQL
+      node#{index}:node(id: "#{id}") {
+        ... on Transaction {
+        #{fields}
+        }
+      }
+      GRAPHQL
+    end
+    query += "\n}"
+
+    _make_request(query)
+  end
+
   def _generate_payload(query_string, variables_hash)
     JSON.generate({
       :query => query_string,
@@ -133,6 +149,48 @@ class BraintreeGateway
           payerStatus
         }
       }
+    GRAPHQL
+  end
+
+  def self.transaction_gateway_rejected_fields
+    <<~GRAPHQL
+    id
+    status
+    gatewayRejectionReason
+    riskData {
+      decision
+      deviceDataCaptured
+    }
+    GRAPHQL
+  end
+
+  def self.transaction_processor_declined_fields
+    <<~GRAPHQL
+    id
+    status
+    processorResponse {
+      message
+      legacyCode
+      cvvResponseCode
+      avsPostalCodeResponseCode
+      avsStreetAddressResponseCode
+    }
+    GRAPHQL
+  end
+
+  def self.transaction_currency_fields
+    <<~GRAPHQL
+    id
+    currencyIsoCode
+    amount
+    merchantAccountId
+    paymentMethodSnapshot {
+      __typename
+      ... on PayPalTransactionDetails {
+        transactionFeeCurrencyIsoCode
+        transactionFeeAmount
+      }
+    }
     GRAPHQL
   end
 
