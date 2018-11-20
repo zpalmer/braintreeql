@@ -17,7 +17,7 @@ class CheckoutsController < ApplicationController
       @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {}).fetch("node")
       @result = _create_result_hash(@transaction)
     rescue BraintreeGateway::GraphQLError => error
-      if error.message != nil and !error.messages.empty?
+      if error.messages != nil and !error.messages.empty?
         flash[:error] = error.messages
       else
         flash[:error] = ["Something unexpected went wrong! Try again."]
@@ -32,7 +32,6 @@ class CheckoutsController < ApplicationController
 
     begin
       result = gateway.transaction(nonce, amount)
-      config.logger.log(Logger::DEBUG, result)
 
       if result["data"] && result["data"]["chargePaymentMethod"]
         redirect_to checkout_path(result["data"]["chargePaymentMethod"]["transaction"]["id"])
@@ -41,7 +40,7 @@ class CheckoutsController < ApplicationController
         redirect_to new_checkout_path
       end
     rescue BraintreeGateway::GraphQLError => error
-      if error.message != nil and !error.messages.empty?
+      if error.messages != nil and !error.messages.empty?
         flash[:error] = error.messages
       else
         flash[:error] = ["Something unexpected went wrong! Try again."]

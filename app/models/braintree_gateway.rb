@@ -22,6 +22,7 @@ class BraintreeGateway
       chargePaymentMethod(input: $input) {
         transaction {
           id
+        }
       }
     }
     GRAPHQL
@@ -121,7 +122,7 @@ class BraintreeGateway
     result_hash = raw_response.parsed_response
 
     if result_hash["errors"] and !result_hash["data"]
-      LOGGER.error("GraphQL request to Braintree failed.\nresult: #{result_hash}\nrequest#{payload}")
+      LOGGER.error("GraphQL request to Braintree failed.\nresult: #{result_hash}\nrequest: #{payload}")
       raise GraphQLError.new(result_hash["errors"])
     end
 
