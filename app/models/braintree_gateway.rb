@@ -22,6 +22,7 @@ class BraintreeGateway
       chargePaymentMethod(input: $input) {
         transaction {
           id
+        }
       }
     }
     GRAPHQL
