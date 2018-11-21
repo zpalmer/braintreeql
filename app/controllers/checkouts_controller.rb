@@ -32,9 +32,10 @@ class CheckoutsController < ApplicationController
 
     begin
       result = gateway.transaction(nonce, amount)
+      id = _get_id_from_transaction_result(result)
 
-      if result["data"] && result["data"]["chargePaymentMethod"]
-        redirect_to checkout_path(result["data"]["chargePaymentMethod"]["transaction"]["id"])
+      if id
+        redirect_to checkout_path(id)
       else
         flash[:error] = ["Something unexpected went wrong! Try again."]
         redirect_to new_checkout_path
@@ -65,6 +66,10 @@ class CheckoutsController < ApplicationController
         :message => "Your test transaction has a status of #{status}. See the Braintree API response and try again."
       }
     end
+  end
+
+  def _get_id_from_transaction_result(result)
+    result.fetch("data", {}).fetch("chargePaymentMethod", {}).fetch("transaction", {})["id"]
   end
 
   def gateway
