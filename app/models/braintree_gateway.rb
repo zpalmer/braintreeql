@@ -1,25 +1,29 @@
 class BraintreeGateway
-  include HTTParty
-  format :json
   LOGGER = ::Logger.new(STDOUT)
   ENDPOINT = "https://payments.sandbox.braintree-api.com/graphql"
-  VERSION = "2018-09-12"
   CONTENT_TYPE = "application/json"
+  VERSION = ENV["BT_VERSION"]
   BASIC_AUTH_USERNAME = ENV["BT_PUBLIC_KEY"]
   BASIC_AUTH_PASSWORD = ENV["BT_PRIVATE_KEY"]
 
+  def initialize(requester_class)
+    @requester = requester_class
+  end
+
   def ping
-    _make_request("{ ping }")
+    _make_request("ping", "{ ping }")
   end
 
   def client_token
-    result = _make_request("mutation { createClientToken(input: {}) { clientToken } }")
+    operation_name = "createClientToken"
+    result = _make_request(operation_name, "mutation { #{operation_name}(input: {}) { clientToken } }")
   end
 
   def transaction(payment_method_id, amount)
+    operation_name = "chargePaymentMethod"
     query = <<~GRAPHQL
     mutation($input: ChargePaymentMethodInput!) {
-      chargePaymentMethod(input: $input) {
+      #{operation_name}(input: $input) {
         transaction {
           id
         }
@@ -35,12 +39,14 @@ class BraintreeGateway
       }
     }
 
-    _make_request(query, variables)
+    _make_request(operation_name, query, variables)
   end
 
   def vault(single_use_payment_method_id)
+    operation_name = "vaultPaymentMethod"
     _make_request(
-      "mutation($input: VaultPaymentMethodInput!) { vaultPaymentMethod(input: $input) { paymentMethod { id usage } } }",
+      operation_name,
+      "mutation($input: VaultPaymentMethodInput!) { #{operation_name}(input: $input) { paymentMethod { id usage } } }",
       {:input => {
         :paymentMethodId => single_use_payment_method_id,
       }}
@@ -48,9 +54,10 @@ class BraintreeGateway
   end
 
   def node_fetch_transaction(transaction_id)
+    operation_name = "transaction"
     query = <<~GRAPHQL
     query {
-      node(id: "#{transaction_id}") {
+      #{operation_name}:node(id: "#{transaction_id}") {
         ... on Transaction {
           id
           amount
@@ -59,18 +66,16 @@ class BraintreeGateway
           processorResponse {
             legacyCode
             message
-            cvvResponseCode
-            avsPostalCodeResponseCode
           }
           paymentMethodSnapshot {
             __typename
             ... on CreditCardDetails {
               bin
-              last4
-              expirationMonth
-              expirationYear
               brandCode
               cardholderName
+              expirationMonth
+              expirationYear
+              last4
               binData {
                 countryOfIssuance
               }
@@ -92,7 +97,7 @@ class BraintreeGateway
       }
     }
     GRAPHQL
-    _make_request(query)
+    _make_request(operation_name, query)
   end
 
   def _generate_payload(query_string, variables_hash)
@@ -102,9 +107,10 @@ class BraintreeGateway
     })
   end
 
-  def _make_request(query_string, variables_hash = {})
+  def _make_request(operation_name, query_string, variables_hash = {})
+    # rescue http exceptions thrown by httparty and throw a GraphQLError
     payload = _generate_payload(query_string, variables_hash)
-    raw_response = self.class.post(
+    result = @requester.post(
       ENDPOINT,
       {
         :body => payload.to_s,
@@ -116,23 +122,36 @@ class BraintreeGateway
           "Braintree-Version" => VERSION,
           "Content-Type" => CONTENT_TYPE,
         },
+        :logger => LOGGER,
+        :log_level => :debug,
       }
-    )
-    # insert timeouts handling here
-    result_hash = raw_response.parsed_response
+    ).parsed_response
+    is_any_data_present = (result["data"] != nil and result["data"][operation_name] != nil)
 
-    if result_hash["errors"] and !result_hash["data"]
-      LOGGER.error("GraphQL request to Braintree failed.\nresult: #{result_hash}\nrequest: #{payload}")
-      raise GraphQLError.new(result_hash["errors"])
+    if result["errors"]
+      braintree_request_id = (result.fetch("extensions", {}) || {})["requestId"]
+      LOGGER.error(
+        <<~SEMISTRUCTUREDLOG
+        "top_level_message" => "GraphQL request to Braintree failed.",
+        "operation_name" => #{operation_name},
+        "braintree_request_id" => #{braintree_request_id},
+        "result" => #{result},
+        "request" => #{payload}"
+        SEMISTRUCTUREDLOG
+      )
     end
 
-    return result_hash
+    if is_any_data_present
+      return result
+    else
+      raise GraphQLError.new(result)
+    end
   end
 
   class GraphQLError < StandardError
     attr_reader :messages
-    def initialize(result_errors_hash)
-      messages = result_errors_hash.map { |error| error["message"] }
+    def initialize(graphql_result)
+      @messages = graphql_result["errors"].map { |error| "Error: " + error["message"] } if graphql_result["errors"]
     end
   end
 end

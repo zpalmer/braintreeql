@@ -19,17 +19,17 @@ RSpec.describe CheckoutsController, type: :controller do
     it "retrieves the Braintree transaction and displays its attributes" do
       # Using a random amount to prevent duplicate checking errors
       amount = "#{random.rand(100)}.#{random.rand(100)}"
-      result = BraintreeGateway.new.transaction("fake-valid-nonce", amount)
-      expect(result["data"]["createTransactionFromSingleUseToken"]).not_to be_nil
+      result = BraintreeGateway.new(HTTParty).transaction("fake-valid-nonce", amount)
+      expect(result["data"]["chargePaymentMethod"]).not_to be_nil
 
-      transaction = result["data"]["createTransactionFromSingleUseToken"]["transaction"]
+      transaction = result["data"]["chargePaymentMethod"]["transaction"]
 
       get :show, id: transaction["id"]
 
       expect(response).to have_http_status(:success)
       expect(response.body).to match Regexp.new(transaction["id"])
-      expect(response.body).to match Regexp.new(transaction["amount"].to_s)
-      expect(response.body).to match Regexp.new(transaction["status"], Regexp::IGNORECASE)
+      expect(response.body).to match Regexp.new(amount)
+      expect(response.body).to match Regexp.new("SUBMITTED_FOR_SETTLEMENT")
     end
   end
 

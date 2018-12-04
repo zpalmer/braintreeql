@@ -14,7 +14,7 @@ class CheckoutsController < ApplicationController
 
   def show
     begin
-      @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {}).fetch("node")
+      @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {})["transaction"]
       @result = _create_result_hash(@transaction)
     rescue BraintreeGateway::GraphQLError => error
       if error.messages != nil and !error.messages.empty?
@@ -37,14 +37,13 @@ class CheckoutsController < ApplicationController
       if id
         redirect_to checkout_path(id)
       else
-        flash[:error] = ["Something unexpected went wrong! Try again."]
-        redirect_to new_checkout_path
+        raise BraintreeGateway::GraphQLError.new()
       end
     rescue BraintreeGateway::GraphQLError => error
       if error.messages != nil and !error.messages.empty?
         flash[:error] = error.messages
       else
-        flash[:error] = ["Something unexpected went wrong! Try again."]
+        flash[:error] = ["Error: Something unexpected went wrong! Try again."]
       end
       redirect_to new_checkout_path
     end
@@ -69,21 +68,16 @@ class CheckoutsController < ApplicationController
   end
 
   def _get_id_from_transaction_result(result)
-    result.fetch("data", {}).fetch("chargePaymentMethod", {}).fetch("transaction", {})["id"]
+    if result["data"]
+      if result["data"]["chargePaymentMethod"]
+        if result["data"]["chargePaymentMethod"]["transaction"]
+          return result["data"]["chargePaymentMethod"]["transaction"]["id"]
+        end
+      end
+    end
   end
 
   def gateway
-    @gateway ||= BraintreeGateway.new
-  end
-
-  def old_gateway
-    env = ENV["BT_ENVIRONMENT"]
-
-    @old_gateway ||= Braintree::Gateway.new(
-      :environment => env && env.to_sym,
-      :merchant_id => ENV["BT_MERCHANT_ID"],
-      :public_key => ENV["BT_PUBLIC_KEY"],
-      :private_key => ENV["BT_PRIVATE_KEY"],
-    )
+    @gateway ||= BraintreeGateway.new(HTTParty)
   end
 end
