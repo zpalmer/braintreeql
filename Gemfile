@@ -21,8 +21,6 @@ gem 'jbuilder', '~> 2.0'
 # bundle exec rake doc:rails generates the API under doc/api.
 gem 'sdoc', '~> 0.4.0', group: :doc
 
-gem 'braintree', '~> 2.87'
-
 gem 'dotenv', '~> 2.0'
 
 gem 'httparty', '~> 0.16.2'
