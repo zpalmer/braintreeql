@@ -53,8 +53,12 @@
             <td><%= @transaction["amount"] %></td>
           </tr>
           <tr>
-            <th>status</th>
+            <th>current status</th>
             <td><%= @transaction["status"] %></td>
+          </tr>
+          <tr>
+            <th>created at</th>
+            <td><%= @transaction["createdAt"] %></td>
           </tr>
         </tbody>
       </table>

@@ -60,13 +60,9 @@ class BraintreeGateway
       #{operation_name}:node(id: "#{transaction_id}") {
         ... on Transaction {
           id
-          amount
+          amount { value }
           status
-          gatewayRejectionReason
-          processorResponse {
-            legacyCode
-            message
-          }
+          createdAt
           paymentMethodSnapshot {
             __typename
             ... on CreditCardDetails {
@@ -76,12 +72,8 @@ class BraintreeGateway
               expirationMonth
               expirationYear
               last4
-              binData {
-                countryOfIssuance
-              }
-              origin {
-                type
-              }
+              binData { countryOfIssuance }
+              origin { type }
             }
             ... on PayPalTransactionDetails {
               payer {
