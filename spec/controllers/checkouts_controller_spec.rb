@@ -46,6 +46,7 @@ RSpec.describe CheckoutsController, type: :controller do
 
       expect(response.body).to match /my_id/
       expect(response.body).to match /12\.12/
+      expect(response.body).to match /CAD/
       expect(response.body).to match /SUBMITTED_FOR_SETTLEMENT/
       expect(response.body).to match /545454/
       expect(response.body).to match /4444/

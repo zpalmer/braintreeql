@@ -15,7 +15,7 @@ class CheckoutsController < ApplicationController
   def show
     begin
       @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {})["transaction"]
-      @result = _create_result_hash(@transaction)
+      @result = _create_status_result_hash(@transaction)
     rescue BraintreeGateway::GraphQLError => error
       if error.messages != nil and !error.messages.empty?
         flash[:error] = error.messages
@@ -37,7 +37,7 @@ class CheckoutsController < ApplicationController
       if id
         redirect_to checkout_path(id)
       else
-        raise BraintreeGateway::GraphQLError.new()
+        raise BraintreeGateway::GraphQLError.new(result)
       end
     rescue BraintreeGateway::GraphQLError => error
       if error.messages != nil and !error.messages.empty?
@@ -49,7 +49,7 @@ class CheckoutsController < ApplicationController
     end
   end
 
-  def _create_result_hash(transaction)
+  def _create_status_result_hash(transaction)
     status = transaction["status"]
 
     if TRANSACTION_SUCCESS_STATUSES.include? status

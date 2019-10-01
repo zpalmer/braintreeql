@@ -60,7 +60,7 @@ class BraintreeGateway
       #{operation_name}:node(id: "#{transaction_id}") {
         ... on Transaction {
           id
-          amount { value }
+          amount { value currencyIsoCode }
           status
           createdAt
           paymentMethodSnapshot {
@@ -121,12 +121,11 @@ class BraintreeGateway
     is_any_data_present = (result["data"] != nil and result["data"][operation_name] != nil)
 
     if result["errors"]
-      braintree_request_id = (result.fetch("extensions", {}) || {})["requestId"]
       LOGGER.error(
         <<~SEMISTRUCTUREDLOG
-        "top_level_message" => "GraphQL request to Braintree failed.",
+        "top_level_message" => "Error present on GraphQL request to Braintree.",
         "operation_name" => #{operation_name},
-        "braintree_request_id" => #{braintree_request_id},
+        "braintree_request_id" => #{parse_braintree_request_id(result)},
         "result" => #{result},
         "request" => #{payload}"
         SEMISTRUCTUREDLOG
@@ -140,10 +139,22 @@ class BraintreeGateway
     end
   end
 
+  def self.parse_braintree_request_id(result)
+    result.fetch("extensions", {})["requestId"]
+  end
+
   class GraphQLError < StandardError
     attr_reader :messages
     def initialize(graphql_result)
       @messages = graphql_result["errors"].map { |error| "Error: " + error["message"] } if graphql_result["errors"]
+
+      LOGGER.error(
+        <<~SEMISTRUCTUREDLOG
+        "top_level_message" => #{@messages.to_s},
+        "braintree_request_id" => #{BraintreeGateway.parse_braintree_request_id(graphql_result)},
+        "result" => #{graphql_result},
+        SEMISTRUCTUREDLOG
+      )
     end
   end
 end

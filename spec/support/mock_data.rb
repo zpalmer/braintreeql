@@ -1,21 +1,16 @@
 RSpec.shared_context 'mock_data' do
 
-  def id_for(transaction)
-    transaction["data"]["chargePaymentMethod"]["transaction"]["id"]
-  end
-
   let(:mock_successful_fetched_transaction) {
     {
       "data" => {
         "transaction" => {
           "id" => "my_id",
-          "amount" => "12.12",
-          "status" => "SUBMITTED_FOR_SETTLEMENT",
-          "gatewayRejectionReason" => nil,
-          "processorResponse" => {
-            "legacyCode" => "1000",
-            "message" => "Approved",
+          "amount" => {
+            "value" => "12.12",
+            "currencyIsoCode" => "CAD",
           },
+          "status" => "SUBMITTED_FOR_SETTLEMENT",
+          "createdAt" => "2019-08-07T15:47:54.000000Z",
           "paymentMethodSnapshot" =>  {
             "__typename" => "CreditCardDetails",
             "bin" => "545454",
@@ -42,7 +37,10 @@ RSpec.shared_context 'mock_data' do
       "data" => {
         "transaction" => {
           "id" => "spaceodyssey",
-          "amount" => "2001",
+          "amount" => {
+            "value" => "2001.00",
+            "currencyIsoCode" => "USD",
+          },
           "status" => "PROCESSOR_DECLINED",
           "gatewayRejectionReason" => nil,
           "processorResponse" => {
