@@ -92,7 +92,7 @@ RSpec.describe CheckoutsController, type: :controller do
 
       post :create, payment_method_nonce: nonce, amount: amount
 
-      expect(response).to redirect_to("/checkouts/#{id_for(mock_created_transaction)}")
+      expect(response).to redirect_to("/checkouts/#{mock_created_transaction["data"]["chargePaymentMethod"]["transaction"]["id"]}")
     end
 
     context "when braintree returns an error" do

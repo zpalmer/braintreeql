@@ -125,7 +125,7 @@ class BraintreeGateway
         <<~SEMISTRUCTUREDLOG
         "top_level_message" => "Error present on GraphQL request to Braintree.",
         "operation_name" => #{operation_name},
-        "braintree_request_id" => #{parse_braintree_request_id(result)},
+        "braintree_request_id" => #{self.class.parse_braintree_request_id(result)},
         "result" => #{result},
         "request" => #{payload}"
         SEMISTRUCTUREDLOG
