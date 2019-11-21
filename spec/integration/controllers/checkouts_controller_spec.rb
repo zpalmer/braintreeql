@@ -38,7 +38,7 @@ RSpec.describe CheckoutsController, type: :controller do
       expect(response).to have_http_status(:success)
       expect(response.body).to match Regexp.new(transaction["id"])
       expect(response.body).to match Regexp.new(amount)
-      expect(response.body).to match Regexp.new("SUBMITTED_FOR_SETTLEMENT")
+      expect(response.body).to match "SUBMITTED_FOR_SETTLEMENT"
     end
   end
 
