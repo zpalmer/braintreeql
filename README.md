@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/braintree/braintree_rails_example.svg?branch=master)](https://travis-ci.org/braintree/braintree_rails_example)
 
-An example Braintree integration with the GraphQL API using Ruby on Rails. Forked from https://github.com/braintree/braintree_rails_example.
+An example Braintree integration with the [GraphQL API](https://graphql.braintreepayments.com/) using Ruby on Rails. Forked from [braintree/braintree_rails_example](https://github.com/braintree/braintree_rails_example).
 
 ## Setup Instructions
 
