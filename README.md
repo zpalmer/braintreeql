@@ -1,8 +1,8 @@
-# Braintree Rails Example
+# Braintree GraphQL Example in Rails
 
 [![Build Status](https://travis-ci.org/braintree/braintree_rails_example.svg?branch=master)](https://travis-ci.org/braintree/braintree_rails_example)
 
-An example Braintree integration for Ruby on Rails.
+An example Braintree integration with the GraphQL API using Ruby on Rails. Forked from https://github.com/braintree/braintree_rails_example.
 
 ## Setup Instructions
 
@@ -30,7 +30,7 @@ An example Braintree integration for Ruby on Rails.
 
 You can deploy this app directly to Heroku to see the app live. Skip the setup instructions above and click the button below. This will walk you through getting this app up and running on Heroku in minutes.
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/braintree/braintree_rails_example&env[BT_ENVIRONMENT]=sandbox)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/braintree/braintree_rails_example&env[BT_VERSION]=2019-11-11)
 
 ## Running Tests
 
