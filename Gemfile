@@ -1,14 +1,15 @@
 source 'https://rubygems.org'
-ruby '2.3.1'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.2.10'
+gem 'rails', '5.2.2.1'
+# Bootsnap for Rails 5 to optimize and cache expensive computations, Read more: https://github.com/Shopify/bootsnap
+gem 'bootsnap', '1.3.2'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0'
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 # Use CoffeeScript for .coffee assets and views
-gem 'coffee-rails', '~> 4.1.0'
+gem 'coffee-rails', '~> 4.2.2'
 # See https://github.com/rails/execjs#readme for more supported runtimes
 # gem 'therubyracer', platforms: :ruby
 
@@ -30,8 +31,9 @@ group :development, :test do
   gem 'sqlite3'
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'
-  # Only running rspec in development and test
+  # Only running rspec in development and test, rails-controller-testing gem needed with Rails 5
   gem 'rspec-rails'
+  gem 'rails-controller-testing'
 end
 
 group :production do
@@ -44,6 +46,9 @@ end
 group :development do
   # Access an IRB console on exception pages or by using <%= console %> in views
   gem 'web-console', '~> 2.0'
+
+  # The Listen gem listens to file modifications and notifies you about the changes.
+  gem 'listen', '~> 3.1', '>= 3.1.5'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'

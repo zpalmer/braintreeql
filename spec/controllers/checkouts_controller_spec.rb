@@ -34,7 +34,7 @@ RSpec.describe CheckoutsController, type: :controller do
     it "returns http success" do
       allow(@mock_gateway).to receive(:node_fetch_transaction).and_return(mock_successful_fetched_transaction)
 
-      get :show, id: "my_id"
+      get :show, params: { id: "my_id" }
 
       expect(response).to have_http_status(:success)
     end
@@ -42,7 +42,7 @@ RSpec.describe CheckoutsController, type: :controller do
     it "displays the transaction's fields" do
       allow(@mock_gateway).to receive(:node_fetch_transaction).and_return(mock_successful_fetched_transaction)
 
-      get :show, id: "my_id"
+      get :show, params: { id: "my_id" }
 
       expect(response.body).to match /my_id/
       expect(response.body).to match /12\.12/
@@ -59,7 +59,7 @@ RSpec.describe CheckoutsController, type: :controller do
     it "populates result object with success for a succesful transaction" do
       allow(@mock_gateway).to receive(:node_fetch_transaction).and_return(mock_successful_fetched_transaction)
 
-      get :show, id: "my_id"
+      get :show, params: { id: "my_id" }
 
       expect(assigns(:result)).to eq({
         :header => "Sweet Success!",
@@ -72,7 +72,7 @@ RSpec.describe CheckoutsController, type: :controller do
     it "populates result object with failure for a failed transaction" do
       allow(@mock_gateway).to receive(:node_fetch_transaction).and_return(mock_processor_decline_fetched_transaction)
 
-      get :show, id: "my_id"
+      get :show, params: { id: "my_id" }
 
       expect(assigns(:result)).to eq({
         :header => "Transaction Unsuccessful",
@@ -90,7 +90,7 @@ RSpec.describe CheckoutsController, type: :controller do
 
       allow(@mock_gateway).to receive(:transaction).and_return(mock_created_transaction)
 
-      post :create, payment_method_nonce: nonce, amount: amount
+      post :create, params: { payment_method_nonce: nonce, amount: amount }
 
       expect(response).to redirect_to("/checkouts/#{mock_created_transaction["data"]["chargePaymentMethod"]["transaction"]["id"]}")
     end
@@ -104,7 +104,7 @@ RSpec.describe CheckoutsController, type: :controller do
           BraintreeGateway::GraphQLError.new(mock_transaction_graphql_error)
         )
 
-        post :create, payment_method_nonce: nonce, amount: amount
+        post :create, params: { payment_method_nonce: nonce, amount: amount }
 
         expect(flash[:error]).to eq([
           "Error: Variable 'amount' has an invalid value. Values of type Amount must contain exactly 0, 2 or 3 decimal places."
@@ -119,7 +119,7 @@ RSpec.describe CheckoutsController, type: :controller do
           BraintreeGateway::GraphQLError.new(mock_transaction_validation_error)
         )
 
-        post :create, payment_method_nonce: nonce, amount: amount
+        post :create, params: { payment_method_nonce: nonce, amount: amount }
 
         expect(flash[:error]).to eq([
           "Error: Unknown or expired payment method ID.",
@@ -134,7 +134,7 @@ RSpec.describe CheckoutsController, type: :controller do
           BraintreeGateway::GraphQLError.new(mock_transaction_graphql_error)
         )
 
-        post :create, payment_method_nonce: nonce, amount: amount
+        post :create, params: { payment_method_nonce: nonce, amount: amount }
 
         expect(response).to redirect_to(new_checkout_path)
       end
