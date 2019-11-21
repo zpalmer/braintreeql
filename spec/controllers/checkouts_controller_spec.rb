@@ -150,7 +150,7 @@ RSpec.describe CheckoutsController, type: :controller do
           })
         )
 
-        post :create, payment_method_nonce: nonce, amount: amount
+        post :create, params: { payment_method_nonce: nonce, amount: amount }
 
         expect(flash[:error]).to eq([
           "Error: Something unexpected went wrong! Try again."

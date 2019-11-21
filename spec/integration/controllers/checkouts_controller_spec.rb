@@ -33,7 +33,7 @@ RSpec.describe CheckoutsController, type: :controller do
 
       transaction = result["data"]["chargePaymentMethod"]["transaction"]
 
-      get :show, id: transaction["id"]
+      get :show, params: { id: transaction["id"] }
 
       expect(response).to have_http_status(:success)
       expect(response.body).to match Regexp.new(transaction["id"])
