@@ -96,7 +96,7 @@ class BraintreeGateway
     JSON.generate({
       :query => query_string,
       :variables => variables_hash
-    })
+    }).to_s
   end
 
   def _make_request(operation_name, query_string, variables_hash = {})
@@ -105,7 +105,7 @@ class BraintreeGateway
     result = @requester.post(
       ENDPOINT,
       {
-        :body => payload.to_s,
+        :body => payload,
         :basic_auth => {
           :username => BASIC_AUTH_USERNAME,
           :password => BASIC_AUTH_PASSWORD,
@@ -140,7 +140,7 @@ class BraintreeGateway
   end
 
   def self.parse_braintree_request_id(result)
-    result.fetch("extensions", {})["requestId"]
+    result.dig("extensions", "requestId")
   end
 
   class GraphQLError < StandardError

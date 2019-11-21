@@ -9,7 +9,7 @@ class CheckoutsController < ApplicationController
   ]
 
   def new
-    @client_token = gateway.client_token["data"]["createClientToken"]["clientToken"]
+    @client_token = gateway.client_token.dig("data", "createClientToken", "clientToken")
   end
 
   def show
@@ -17,11 +17,7 @@ class CheckoutsController < ApplicationController
       @transaction = gateway.node_fetch_transaction(params[:id]).fetch("data", {})["transaction"]
       @result = _create_status_result_hash(@transaction)
     rescue BraintreeGateway::GraphQLError => error
-      if error.messages != nil and !error.messages.empty?
-        flash[:error] = error.messages
-      else
-        flash[:error] = ["Something unexpected went wrong! Try again."]
-      end
+      _flash_errors(error)
       redirect_to new_checkout_path
     end
   end
@@ -32,7 +28,7 @@ class CheckoutsController < ApplicationController
 
     begin
       result = gateway.transaction(nonce, amount)
-      id = _get_id_from_transaction_result(result)
+      id = result.dig("data", "chargePaymentMethod", "transaction", "id")
 
       if id
         redirect_to checkout_path(id)
@@ -40,11 +36,7 @@ class CheckoutsController < ApplicationController
         raise BraintreeGateway::GraphQLError.new(result)
       end
     rescue BraintreeGateway::GraphQLError => error
-      if error.messages != nil and !error.messages.empty?
-        flash[:error] = error.messages
-      else
-        flash[:error] = ["Error: Something unexpected went wrong! Try again."]
-      end
+      _flash_errors(error)
       redirect_to new_checkout_path
     end
   end
@@ -67,13 +59,11 @@ class CheckoutsController < ApplicationController
     end
   end
 
-  def _get_id_from_transaction_result(result)
-    if result["data"]
-      if result["data"]["chargePaymentMethod"]
-        if result["data"]["chargePaymentMethod"]["transaction"]
-          return result["data"]["chargePaymentMethod"]["transaction"]["id"]
-        end
-      end
+  def _flash_errors(error)
+    if error.messages != nil and !error.messages.empty?
+      flash[:error] = error.messages
+    else
+      flash[:error] = ["Error: Something unexpected went wrong! Try again."]
     end
   end
 
