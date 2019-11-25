@@ -45,10 +45,6 @@
             <td><%= @transaction["id"] %></td>
           </tr>
           <tr>
-            <th>type</th>
-            <td>sale</td>
-          </tr>
-          <tr>
             <th>amount</th>
             <td><%= @transaction["amount"]["value"] + " " + @transaction["amount"]["currencyIsoCode"] if @transaction["amount"] %></td>
           </tr>
